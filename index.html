@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chasing Love — Leitura Interativa</title>
+<style>
+  /* ─── TOKENS ─── */
+  :root {
+    --bg:        #0d0d12;
+    --surface:   #16161f;
+    --card:      #1e1e2a;
+    --border:    #2a2a3a;
+    --accent:    #c9a96e;
+    --accent2:   #e8c99a;
+    --text:      #e8e3d8;
+    --muted:     #8a8497;
+    --red:       #c96e7a;
+    --highlight: rgba(201,169,110,0.15);
+
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body:    'Lora', 'Georgia', serif;
+    --font-ui:      'Inter', system-ui, sans-serif;
+
+    --r: 10px;
+    --r-sm: 6px;
+    --transition: 0.22s ease;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── GOOGLE FONTS ─── */
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap');
+
+  /* ─── LAYOUT ─── */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width var(--transition), min-width var(--transition);
+  }
+  .sidebar.collapsed { width: 0; min-width: 0; border-right: none; }
+
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .book-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    color: var(--accent);
+    font-style: italic;
+    line-height: 1.3;
+  }
+  .book-meta {
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .chapter-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 8px 0;
+  }
+  .chapter-list::-webkit-scrollbar { width: 4px; }
+  .chapter-list::-webkit-scrollbar-track { background: transparent; }
+  .chapter-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .ch-item {
+    padding: 10px 20px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background var(--transition), border-color var(--transition);
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ch-item:hover { background: var(--card); color: var(--text); }
+  .ch-item.active {
+    background: var(--highlight);
+    border-left-color: var(--accent);
+    color: var(--accent2);
+  }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .btn-icon {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--r-sm);
+    padding: 7px 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    transition: background var(--transition), border-color var(--transition);
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+  }
+  .btn-icon:hover { background: var(--border); border-color: var(--accent); color: var(--accent); }
+  .btn-icon.active { background: var(--highlight); border-color: var(--accent); color: var(--accent); }
+
+  .topbar-title {
+    flex: 1;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    color: var(--accent2);
+    font-style: italic;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+  /* SETTINGS PANEL */
+  .settings-panel {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: none;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+  }
+  .settings-panel.open { display: flex; }
+
+  .setting-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .setting-group label { white-space: nowrap; }
+
+  input[type=range] {
+    accent-color: var(--accent);
+    cursor: pointer;
+    width: 100px;
+  }
+  select {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--r-sm);
+    padding: 5px 8px;
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  select:focus { outline: none; border-color: var(--accent); }
+
+  /* AUDIO PLAYER */
+  .audio-bar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+    display: none;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .audio-bar.visible { display: flex; }
+
+  .audio-controls { display: flex; align-items: center; gap: 8px; }
+
+  .btn-play {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: #0d0d12;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s, background var(--transition);
+    flex-shrink: 0;
+  }
+  .btn-play:hover { background: var(--accent2); transform: scale(1.06); }
+  .btn-play:active { transform: scale(0.96); }
+
+  .audio-info {
+    flex: 1;
+    min-width: 160px;
+  }
+  .audio-label {
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .audio-progress-wrap {
+    background: var(--border);
+    border-radius: 4px;
+    height: 4px;
+    cursor: pointer;
+    position: relative;
+  }
+  .audio-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.3s linear;
+    pointer-events: none;
+  }
+
+  .audio-speed { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .speed-btn {
+    background: var(--border);
+    border: none;
+    color: var(--muted);
+    border-radius: 4px;
+    padding: 3px 7px;
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+  }
+  .speed-btn.active { background: var(--highlight); color: var(--accent); }
+  .speed-btn:hover { color: var(--text); }
+
+  /* CONTENT */
+  .content-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+  }
+  .content-wrap::-webkit-scrollbar { width: 6px; }
+  .content-wrap::-webkit-scrollbar-track { background: transparent; }
+  .content-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .chapter-content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+
+  .chapter-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    color: var(--accent);
+    font-weight: 400;
+    margin-bottom: 32px;
+    line-height: 1.25;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+  }
+
+  .para {
+    font-size: var(--reading-size, 1.05rem);
+    line-height: var(--reading-line, 1.9);
+    color: var(--text);
+    margin-bottom: 1.4em;
+    transition: background 0.2s;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-left: -6px;
+  }
+  .para.speaking {
+    background: rgba(201,169,110,0.12);
+    color: var(--accent2);
+  }
+  .para:hover { background: rgba(255,255,255,0.03); cursor: pointer; }
+  .para:hover::after {
+    content: ' 🔊';
+    font-size: 0.7em;
+    opacity: 0.5;
+  }
+
+  /* PROGRESS */
+  .reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--accent);
+    z-index: 100;
+    transition: width 0.1s;
+    pointer-events: none;
+  }
+
+  /* NAV BOTTOM */
+  .chapter-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    gap: 12px;
+  }
+  .nav-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: var(--r);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
+    transition: all var(--transition);
+    max-width: 45%;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .nav-btn span { display: block; color: var(--muted); font-size: 0.72rem; margin-bottom: 3px; }
+
+  /* WELCOME */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+    padding: 40px 32px;
+  }
+  .welcome-icon { font-size: 4rem; margin-bottom: 20px; }
+  .welcome h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    color: var(--accent);
+    font-style: italic;
+    margin-bottom: 12px;
+  }
+  .welcome p { color: var(--muted); font-size: 1rem; max-width: 400px; line-height: 1.7; }
+  .welcome-cta {
+    margin-top: 28px;
+    background: var(--accent);
+    color: #0d0d12;
+    border: none;
+    padding: 12px 28px;
+    border-radius: var(--r);
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background var(--transition);
+  }
+  .welcome-cta:hover { background: var(--accent2); }
+
+  /* FONT SIZE */
+  body.font-sm  { --reading-size: 0.9rem;  --reading-line: 1.75; }
+  body.font-md  { --reading-size: 1.05rem; --reading-line: 1.9; }
+  body.font-lg  { --reading-size: 1.2rem;  --reading-line: 2.0; }
+  body.font-xl  { --reading-size: 1.4rem;  --reading-line: 2.05; }
+
+  /* SEPIA MODE */
+  body.sepia {
+    --bg:      #1c1710;
+    --surface: #211e15;
+    --card:    #2a261a;
+    --text:    #e4d9c0;
+  }
+
+  /* NIGHT MODE (default, already dark) */
+
+  /* MOBILE */
+  @media (max-width: 640px) {
+    .sidebar { position: fixed; left: 0; top: 0; height: 100vh; z-index: 200; transform: translateX(0); transition: transform var(--transition); }
+    .sidebar.collapsed { transform: translateX(-100%); width: 280px; min-width: 280px; }
+    .chapter-content { padding: 32px 20px 60px; }
+    .topbar { padding: 10px 16px; }
+  }
+
+  /* TOOLTIP */
+  [data-tip] { position: relative; }
+  [data-tip]:hover::before {
+    content: attr(data-tip);
+    position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); font-family: var(--font-ui); font-size: 0.72rem;
+    padding: 4px 8px; border-radius: 4px; white-space: nowrap; z-index: 99;
+    pointer-events: none;
+  }
+
+  /* SEARCH BOX */
+  .search-wrap { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .search-input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 7px 10px;
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+  }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+</style>
+</head>
+<body class="font-md">
+
+<div class="reading-progress" id="readingProgress"></div>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="book-title">Chasing Love</div>
+      <div class="book-meta">Peony · Tradução PT</div>
+    </div>
+    <div class="search-wrap">
+      <input class="search-input" type="search" placeholder="Buscar capítulo..." id="searchInput">
+    </div>
+    <div class="chapter-list" id="chapterList"></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <button class="btn-icon" id="btnToggleSidebar" data-tip="Capítulos">☰</button>
+      <div class="topbar-title" id="topbarTitle">Chasing Love</div>
+      <div class="topbar-right">
+        <button class="btn-icon" id="btnAudio" data-tip="Áudio">🎧 Áudio</button>
+        <button class="btn-icon" id="btnSettings" data-tip="Configurações">⚙️</button>
+      </div>
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div class="settings-panel" id="settingsPanel">
+      <div class="setting-group">
+        <label>Tamanho da fonte</label>
+        <button class="speed-btn" onclick="setFont('sm')">A-</button>
+        <button class="speed-btn active" id="fontMd" onclick="setFont('md')">A</button>
+        <button class="speed-btn" id="fontLg" onclick="setFont('lg')">A+</button>
+        <button class="speed-btn" id="fontXl" onclick="setFont('xl')">A++</button>
+      </div>
+      <div class="setting-group">
+        <label>Tema</label>
+        <select onchange="setTheme(this.value)">
+          <option value="dark">Noturno</option>
+          <option value="sepia">Sépia</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label>Voz (TTS)</label>
+        <select id="voiceSelect"></select>
+      </div>
+    </div>
+
+    <!-- AUDIO BAR -->
+    <div class="audio-bar" id="audioBar">
+      <div class="audio-controls">
+        <button class="btn-icon" id="btnPrev" data-tip="Parágrafo anterior">⏮</button>
+        <button class="btn-play" id="btnPlay">▶</button>
+        <button class="btn-icon" id="btnNext" data-tip="Próximo parágrafo">⏭</button>
+        <button class="btn-icon" id="btnStop" data-tip="Parar">⏹</button>
+      </div>
+      <div class="audio-info">
+        <div class="audio-label" id="audioLabel">Pressione play para ouvir o capítulo</div>
+        <div class="audio-progress-wrap" id="audioProgressWrap">
+          <div class="audio-progress-fill" id="audioProgressFill" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="audio-speed">
+        <span style="font-family:var(--font-ui);font-size:0.72rem;color:var(--muted)">Velocidade:</span>
+        <button class="speed-btn" onclick="setRate(0.8)">0.8×</button>
+        <button class="speed-btn active" id="rate1" onclick="setRate(1)">1×</button>
+        <button class="speed-btn" onclick="setRate(1.3)">1.3×</button>
+        <button class="speed-btn" onclick="setRate(1.6)">1.6×</button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-wrap" id="contentWrap">
+      <div class="chapter-content" id="chapterContent">
+        <div class="welcome">
+          <div class="welcome-icon">📖</div>
+          <h1>Chasing Love</h1>
+          <p>Romance tailandês traduzido. Escolha um capítulo na barra lateral para começar a ler — ou ouça com o leitor de áudio integrado.</p>
+          <button class="welcome-cta" onclick="loadChapter(0)">Começar do início</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- BOOK DATA -->
+<script src="book_data.js"></script>
+
+<script>
+// ─── STATE ───
+let currentChapter = -1;
+let ttsActive = false;
+let utterance = null;
+let paraIndex = 0;
+let speechRate = 1;
+let selectedVoice = null;
+let fontClass = 'font-md';
+let sidebarOpen = true;
+
+const synth = window.speechSynthesis;
+let voices = [];
+
+// ─── INIT ───
+function init() {
+  buildChapterList();
+  loadVoices();
+  bindEvents();
+  restoreProgress();
+}
+
+function buildChapterList() {
+  const list = document.getElementById('chapterList');
+  BOOK_DATA.forEach((ch, i) => {
+    const div = document.createElement('div');
+    div.className = 'ch-item';
+    div.textContent = ch.title;
+    div.dataset.index = i;
+    div.onclick = () => loadChapter(i);
+    list.appendChild(div);
+  });
+}
+
+function loadVoices() {
+  const populate = () => {
+    voices = synth.getVoices().filter(v =>
+      v.lang.startsWith('pt') || v.lang.startsWith('es')
+    );
+    // Also include all if no PT found
+    if (voices.length === 0) voices = synth.getVoices();
+    const sel = document.getElementById('voiceSelect');
+    sel.innerHTML = '';
+    voices.forEach((v, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `${v.name} (${v.lang})`;
+      sel.appendChild(opt);
+    });
+    // Default: pick pt-BR or pt voice
+    const ptIdx = voices.findIndex(v => v.lang === 'pt-BR' || v.lang === 'pt');
+    if (ptIdx > -1) sel.value = ptIdx;
+    selectedVoice = voices[sel.value] || voices[0];
+    sel.onchange = () => { selectedVoice = voices[sel.value]; };
+  };
+  if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populate;
+  populate();
+}
+
+// ─── CHAPTER LOADING ───
+function loadChapter(idx) {
+  stopAudio();
+  currentChapter = idx;
+  paraIndex = 0;
+
+  // Sidebar active
+  document.querySelectorAll('.ch-item').forEach(el => el.classList.remove('active'));
+  const activeEl = document.querySelector(`.ch-item[data-index="${idx}"]`);
+  if (activeEl) {
+    activeEl.classList.add('active');
+    activeEl.scrollIntoView({ block: 'nearest' });
+  }
+
+  const ch = BOOK_DATA[idx];
+  const wrap = document.getElementById('chapterContent');
+  document.getElementById('topbarTitle').textContent = ch.title;
+
+  let html = `<h1 class="chapter-title">${escHtml(ch.title)}</h1>`;
+  ch.paragraphs.forEach((p, i) => {
+    html += `<p class="para" data-para="${i}" onclick="speakFrom(${i})">${escHtml(p)}</p>`;
+  });
+
+  html += `<div class="chapter-nav">
+    <button class="nav-btn" ${idx === 0 ? 'disabled' : ''} onclick="loadChapter(${idx-1})">
+      <span>← Anterior</span>${idx > 0 ? escHtml(BOOK_DATA[idx-1].title).substring(0,40) : ''}
+    </button>
+    <button class="nav-btn" ${idx === BOOK_DATA.length-1 ? 'disabled' : ''} onclick="loadChapter(${idx+1})">
+      <span>Próximo →</span>${idx < BOOK_DATA.length-1 ? escHtml(BOOK_DATA[idx+1].title).substring(0,40) : ''}
+    </button>
+  </div>`;
+
+  wrap.innerHTML = html;
+  document.getElementById('contentWrap').scrollTop = 0;
+  updateAudioLabel();
+  saveProgress(idx);
+
+  // On mobile close sidebar
+  if (window.innerWidth <= 640) toggleSidebar(false);
+}
+
+// ─── AUDIO ───
+function showAudioBar(show) {
+  document.getElementById('audioBar').classList.toggle('visible', show);
+}
+
+document.getElementById('btnAudio').addEventListener('click', () => {
+  const bar = document.getElementById('audioBar');
+  const visible = bar.classList.toggle('visible');
+  document.getElementById('btnAudio').classList.toggle('active', visible);
+  ttsActive = visible;
+  if (!visible) stopAudio();
+});
+
+document.getElementById('btnPlay').addEventListener('click', () => {
+  if (synth.speaking && !synth.paused) {
+    synth.pause();
+    document.getElementById('btnPlay').textContent = '▶';
+  } else if (synth.paused) {
+    synth.resume();
+    document.getElementById('btnPlay').textContent = '⏸';
+  } else {
+    speakFrom(paraIndex);
+  }
+});
+
+document.getElementById('btnStop').addEventListener('click', stopAudio);
+document.getElementById('btnPrev').addEventListener('click', () => {
+  if (paraIndex > 0) speakFrom(paraIndex - 1);
+});
+document.getElementById('btnNext').addEventListener('click', () => {
+  const ch = BOOK_DATA[currentChapter];
+  if (ch && paraIndex < ch.paragraphs.length - 1) speakFrom(paraIndex + 1);
+});
+
+function speakFrom(idx) {
+  if (currentChapter < 0) return;
+  stopAudio(false);
+  paraIndex = idx;
+  speakPara();
+}
+
+function speakPara() {
+  const ch = BOOK_DATA[currentChapter];
+  if (!ch || paraIndex >= ch.paragraphs.length) {
+    stopAudio();
+    return;
+  }
+
+  const text = ch.paragraphs[paraIndex];
+  utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = speechRate;
+  utterance.lang = 'pt-BR';
+  if (selectedVoice) utterance.voice = selectedVoice;
+
+  utterance.onstart = () => {
+    highlightPara(paraIndex);
+    document.getElementById('btnPlay').textContent = '⏸';
+    updateAudioLabel();
+    updateProgress();
+  };
+  utterance.onend = () => {
+    clearHighlight();
+    paraIndex++;
+    speakPara();
+  };
+  utterance.onerror = () => { clearHighlight(); };
+
+  synth.speak(utterance);
+}
+
+function stopAudio(resetPlay = true) {
+  synth.cancel();
+  clearHighlight();
+  if (resetPlay) {
+    document.getElementById('btnPlay').textContent = '▶';
+    document.getElementById('audioProgressFill').style.width = '0%';
+    updateAudioLabel();
+  }
+}
+
+function highlightPara(idx) {
+  clearHighlight();
+  const el = document.querySelector(`.para[data-para="${idx}"]`);
+  if (el) {
+    el.classList.add('speaking');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function clearHighlight() {
+  document.querySelectorAll('.para.speaking').forEach(el => el.classList.remove('speaking'));
+}
+
+function updateProgress() {
+  const ch = BOOK_DATA[currentChapter];
+  if (!ch) return;
+  const pct = ch.paragraphs.length > 0 ? (paraIndex / ch.paragraphs.length) * 100 : 0;
+  document.getElementById('audioProgressFill').style.width = pct + '%';
+}
+
+function updateAudioLabel() {
+  const ch = BOOK_DATA[currentChapter];
+  if (!ch) return;
+  document.getElementById('audioLabel').textContent =
+    `Parágrafo ${paraIndex + 1} de ${ch.paragraphs.length}`;
+}
+
+function setRate(r) {
+  speechRate = r;
+  document.querySelectorAll('.speed-btn').forEach(b => {
+    if (b.onclick && b.onclick.toString().includes(r)) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+  if (synth.speaking) {
+    const idx = paraIndex;
+    stopAudio(false);
+    paraIndex = idx;
+    speakPara();
+  }
+}
+
+// ─── FONT / THEME ───
+function setFont(size) {
+  document.body.classList.remove('font-sm','font-md','font-lg','font-xl');
+  document.body.classList.add('font-' + size);
+  localStorage.setItem('cl_font', size);
+}
+
+function setTheme(t) {
+  document.body.classList.remove('sepia');
+  if (t === 'sepia') document.body.classList.add('sepia');
+  localStorage.setItem('cl_theme', t);
+}
+
+// ─── SIDEBAR ───
+function toggleSidebar(force) {
+  const sb = document.getElementById('sidebar');
+  sidebarOpen = force !== undefined ? force : !sidebarOpen;
+  sb.classList.toggle('collapsed', !sidebarOpen);
+}
+
+document.getElementById('btnToggleSidebar').addEventListener('click', () => toggleSidebar());
+
+// ─── SETTINGS ───
+document.getElementById('btnSettings').addEventListener('click', () => {
+  const p = document.getElementById('settingsPanel');
+  p.classList.toggle('open');
+  document.getElementById('btnSettings').classList.toggle('active', p.classList.contains('open'));
+});
+
+// ─── SEARCH ───
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  document.querySelectorAll('.ch-item').forEach(el => {
+    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+
+// ─── READING SCROLL PROGRESS ───
+document.getElementById('contentWrap').addEventListener('scroll', function() {
+  const el = this;
+  const pct = el.scrollTop / (el.scrollHeight - el.clientHeight) * 100;
+  document.getElementById('readingProgress').style.width = pct + '%';
+});
+
+// ─── PERSIST ───
+function saveProgress(idx) {
+  localStorage.setItem('cl_chapter', idx);
+}
+function restoreProgress() {
+  const saved = localStorage.getItem('cl_chapter');
+  const font = localStorage.getItem('cl_font');
+  const theme = localStorage.getItem('cl_theme');
+  if (font) setFont(font);
+  if (theme) setTheme(theme);
+  // Don't auto-load — let user choose
+}
+
+// ─── UTILS ───
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function bindEvents() {}
+
+// ─── START ───
+init();
+</script>
+</body>
+</html>
