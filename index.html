@@ -5,443 +5,150 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chasing Love — Leitura Interativa</title>
 <style>
-  /* ─── TOKENS ─── */
-  :root {
-    --bg:        #0d0d12;
-    --surface:   #16161f;
-    --card:      #1e1e2a;
-    --border:    #2a2a3a;
-    --accent:    #c9a96e;
-    --accent2:   #e8c99a;
-    --text:      #e8e3d8;
-    --muted:     #8a8497;
-    --red:       #c96e7a;
-    --highlight: rgba(201,169,110,0.15);
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap');
 
-    --font-display: 'Playfair Display', Georgia, serif;
-    --font-body:    'Lora', 'Georgia', serif;
-    --font-ui:      'Inter', system-ui, sans-serif;
+:root {
+  --bg:#0d0d12; --surface:#16161f; --card:#1e1e2a; --border:#2a2a3a;
+  --accent:#c9a96e; --accent2:#e8c99a; --text:#e8e3d8; --muted:#8a8497;
+  --highlight:rgba(201,169,110,0.15); --green:#6ec98a;
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-body:'Lora','Georgia',serif;
+  --font-ui:'Inter',system-ui,sans-serif;
+  --r:10px; --r-sm:6px; --t:.22s ease;
+  --reading-size:1.05rem; --reading-line:1.9;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;display:flex;flex-direction:column}
 
-    --r: 10px;
-    --r-sm: 6px;
-    --transition: 0.22s ease;
-  }
+/* SEPIA */
+body.sepia{--bg:#1c1710;--surface:#221e14;--card:#2a261a;--text:#e4d9c0;--border:#3a3425}
+/* LIGHT */
+body.light{--bg:#f5f0e8;--surface:#ece6da;--card:#e0d9cc;--border:#ccc5b5;--text:#2a2520;--muted:#7a7060;--surface:#ddd8cc}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+.app{display:flex;height:100vh;overflow:hidden}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+/* ── SIDEBAR ── */
+.sidebar{width:285px;min-width:285px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width var(--t),min-width var(--t)}
+.sidebar.collapsed{width:0;min-width:0;border-right:none}
+.sidebar-header{padding:20px 18px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.book-title{font-family:var(--font-display);font-size:1.1rem;color:var(--accent);font-style:italic;line-height:1.3}
+.book-meta{font-family:var(--font-ui);font-size:.7rem;color:var(--muted);margin-top:3px;letter-spacing:.04em;text-transform:uppercase}
+.search-wrap{padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.search-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 10px;color:var(--text);font-family:var(--font-ui);font-size:.8rem}
+.search-input:focus{outline:none;border-color:var(--accent)}
+.search-input::placeholder{color:var(--muted)}
+.chapter-list{overflow-y:auto;flex:1;padding:6px 0}
+.chapter-list::-webkit-scrollbar{width:4px}
+.chapter-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.ch-item{padding:9px 18px;cursor:pointer;border-left:3px solid transparent;transition:background var(--t),border-color var(--t);font-family:var(--font-ui);font-size:.8rem;color:var(--muted);line-height:1.4;display:flex;align-items:center;gap:8px}
+.ch-item:hover{background:var(--card);color:var(--text)}
+.ch-item.active{background:var(--highlight);border-left-color:var(--accent);color:var(--accent2)}
+.ch-item .bk-icon{color:var(--accent);font-size:.75rem;flex-shrink:0;opacity:0}
+.ch-item.bookmarked .bk-icon{opacity:1}
+.ch-item .ch-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-  /* ─── GOOGLE FONTS ─── */
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap');
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;gap:10px;padding:11px 22px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.btn-icon{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:var(--r-sm);padding:6px 10px;cursor:pointer;font-size:.78rem;line-height:1;transition:background var(--t),border-color var(--t);display:flex;align-items:center;gap:5px;font-family:var(--font-ui);white-space:nowrap}
+.btn-icon:hover{background:var(--border);border-color:var(--accent);color:var(--accent)}
+.btn-icon.active{background:var(--highlight);border-color:var(--accent);color:var(--accent)}
+.topbar-title{flex:1;font-family:var(--font-display);font-size:.92rem;color:var(--accent2);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.topbar-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
 
-  /* ─── LAYOUT ─── */
-  .app { display: flex; height: 100vh; overflow: hidden; }
+/* ── ZOOM CONTROL ── */
+.zoom-ctrl{display:flex;align-items:center;gap:4px}
+.zoom-btn{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:var(--r-sm);padding:5px 9px;cursor:pointer;font-size:.85rem;font-weight:600;font-family:var(--font-ui);transition:all var(--t);line-height:1}
+.zoom-btn:hover{border-color:var(--accent);color:var(--accent)}
+.zoom-val{font-family:var(--font-ui);font-size:.72rem;color:var(--muted);min-width:34px;text-align:center}
 
-  /* SIDEBAR */
-  .sidebar {
-    width: 280px;
-    min-width: 280px;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transition: width var(--transition), min-width var(--transition);
-  }
-  .sidebar.collapsed { width: 0; min-width: 0; border-right: none; }
+/* ── SETTINGS PANEL ── */
+.settings-panel{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 22px;display:none;flex-wrap:wrap;gap:18px;align-items:center}
+.settings-panel.open{display:flex}
+.setting-group{display:flex;align-items:center;gap:8px;font-family:var(--font-ui);font-size:.78rem;color:var(--muted)}
+.setting-group label{white-space:nowrap}
+select{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:var(--r-sm);padding:5px 8px;font-family:var(--font-ui);font-size:.78rem;cursor:pointer}
+select:focus{outline:none;border-color:var(--accent)}
+.speed-btn{background:var(--border);border:none;color:var(--muted);border-radius:4px;padding:3px 7px;font-family:var(--font-ui);font-size:.72rem;cursor:pointer;transition:all var(--t)}
+.speed-btn.active{background:var(--highlight);color:var(--accent)}
+.speed-btn:hover{color:var(--text)}
 
-  .sidebar-header {
-    padding: 24px 20px 16px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .book-title {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    color: var(--accent);
-    font-style: italic;
-    line-height: 1.3;
-  }
-  .book-meta {
-    font-family: var(--font-ui);
-    font-size: 0.72rem;
-    color: var(--muted);
-    margin-top: 4px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
+/* ── AUDIO BAR ── */
+.audio-bar{background:var(--card);border-bottom:1px solid var(--border);padding:10px 22px;display:none;align-items:center;gap:14px;flex-wrap:wrap;flex-shrink:0}
+.audio-bar.visible{display:flex}
+.audio-controls{display:flex;align-items:center;gap:7px}
+.btn-play{width:38px;height:38px;border-radius:50%;background:var(--accent);border:none;color:#0d0d12;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,background var(--t);flex-shrink:0}
+.btn-play:hover{background:var(--accent2);transform:scale(1.06)}
+.audio-info{flex:1;min-width:140px}
+.audio-label{font-family:var(--font-ui);font-size:.7rem;color:var(--muted);margin-bottom:4px}
+.audio-progress-wrap{background:var(--border);border-radius:4px;height:4px;cursor:pointer;position:relative}
+.audio-progress-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .3s linear;pointer-events:none}
+.audio-speed{display:flex;align-items:center;gap:5px;flex-shrink:0}
 
-  .chapter-list {
-    overflow-y: auto;
-    flex: 1;
-    padding: 8px 0;
-  }
-  .chapter-list::-webkit-scrollbar { width: 4px; }
-  .chapter-list::-webkit-scrollbar-track { background: transparent; }
-  .chapter-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+/* ── READING PROGRESS BAR ── */
+.reading-progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:200;pointer-events:none;transition:width .1s}
 
-  .ch-item {
-    padding: 10px 20px;
-    cursor: pointer;
-    border-left: 3px solid transparent;
-    transition: background var(--transition), border-color var(--transition);
-    font-family: var(--font-ui);
-    font-size: 0.82rem;
-    color: var(--muted);
-    line-height: 1.4;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .ch-item:hover { background: var(--card); color: var(--text); }
-  .ch-item.active {
-    background: var(--highlight);
-    border-left-color: var(--accent);
-    color: var(--accent2);
-  }
+/* ── CONTENT ── */
+.content-wrap{flex:1;overflow-y:auto;padding:0}
+.content-wrap::-webkit-scrollbar{width:6px}
+.content-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.chapter-content{max-width:720px;margin:0 auto;padding:48px 32px 80px}
 
-  /* MAIN */
-  .main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-width: 0;
-  }
+.chapter-header{margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.chapter-title{font-family:var(--font-display);font-size:clamp(1.4rem,3vw,2rem);color:var(--accent);font-weight:400;line-height:1.25;margin-bottom:10px}
+.chapter-meta{font-family:var(--font-ui);font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:12px}
+.bk-toggle{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);padding:3px 8px;cursor:pointer;font-family:var(--font-ui);font-size:.72rem;transition:all var(--t)}
+.bk-toggle:hover{border-color:var(--accent);color:var(--accent)}
+.bk-toggle.active{background:var(--highlight);border-color:var(--accent);color:var(--accent)}
 
-  /* TOPBAR */
-  .topbar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 24px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    flex-wrap: wrap;
-  }
-  .btn-icon {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: var(--r-sm);
-    padding: 7px 10px;
-    cursor: pointer;
-    font-size: 1rem;
-    line-height: 1;
-    transition: background var(--transition), border-color var(--transition);
-    display: flex; align-items: center; gap: 6px;
-    font-family: var(--font-ui);
-    font-size: 0.8rem;
-  }
-  .btn-icon:hover { background: var(--border); border-color: var(--accent); color: var(--accent); }
-  .btn-icon.active { background: var(--highlight); border-color: var(--accent); color: var(--accent); }
+/* IN-CHAPTER SEARCH */
+.inline-search{margin-bottom:20px;display:none;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px}
+.inline-search.open{display:flex}
+.inline-search input{flex:1;background:none;border:none;color:var(--text);font-family:var(--font-ui);font-size:.82rem}
+.inline-search input:focus{outline:none}
+.inline-search-info{font-family:var(--font-ui);font-size:.72rem;color:var(--muted);white-space:nowrap}
+.inline-search button{background:var(--border);border:none;color:var(--text);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.8rem}
 
-  .topbar-title {
-    flex: 1;
-    font-family: var(--font-display);
-    font-size: 0.95rem;
-    color: var(--accent2);
-    font-style: italic;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-  }
+.para{font-size:var(--reading-size);line-height:var(--reading-line);color:var(--text);margin-bottom:1.4em;border-radius:4px;padding:3px 8px;margin-left:-8px;transition:background .2s,color .2s;cursor:pointer;position:relative}
+.para:hover{background:rgba(255,255,255,.03)}
+.para.speaking{background:rgba(201,169,110,.13);color:var(--accent2)}
+.para mark{background:rgba(201,169,110,.35);color:var(--accent2);border-radius:2px;padding:0 2px}
 
-  .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+/* CHAPTER NAV */
+.chapter-nav{display:flex;justify-content:space-between;margin-top:48px;padding-top:24px;border-top:1px solid var(--border);gap:12px}
+.nav-btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 16px;border-radius:var(--r);cursor:pointer;font-family:var(--font-ui);font-size:.8rem;transition:all var(--t);max-width:47%;text-align:center;line-height:1.4}
+.nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.nav-btn span{display:block;color:var(--muted);font-size:.7rem;margin-bottom:2px}
 
-  /* SETTINGS PANEL */
-  .settings-panel {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 24px;
-    display: none;
-    flex-wrap: wrap;
-    gap: 20px;
-    align-items: center;
-  }
-  .settings-panel.open { display: flex; }
+/* WELCOME */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:40px 32px}
+.welcome-icon{font-size:3.5rem;margin-bottom:18px}
+.welcome h1{font-family:var(--font-display);font-size:clamp(1.8rem,4vw,2.6rem);color:var(--accent);font-style:italic;margin-bottom:10px}
+.welcome p{color:var(--muted);font-size:.98rem;max-width:380px;line-height:1.75;margin-bottom:6px}
+.welcome-cta{margin-top:24px;background:var(--accent);color:#0d0d12;border:none;padding:12px 26px;border-radius:var(--r);font-family:var(--font-ui);font-weight:600;font-size:.88rem;cursor:pointer;transition:background var(--t)}
+.welcome-cta:hover{background:var(--accent2)}
+.bookmarks-list{margin-top:12px;display:flex;flex-direction:column;gap:6px;width:100%;max-width:360px}
+.bk-resume{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;cursor:pointer;text-align:left;font-family:var(--font-ui);font-size:.8rem;color:var(--text);transition:all var(--t);display:flex;align-items:center;gap:8px}
+.bk-resume:hover{border-color:var(--accent);color:var(--accent)}
 
-  .setting-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: var(--font-ui);
-    font-size: 0.8rem;
-    color: var(--muted);
-  }
-  .setting-group label { white-space: nowrap; }
+/* TOAST */
+.toast{position:fixed;bottom:28px;right:24px;background:var(--card);border:1px solid var(--accent);color:var(--accent);border-radius:var(--r);padding:10px 16px;font-family:var(--font-ui);font-size:.8rem;z-index:999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
 
-  input[type=range] {
-    accent-color: var(--accent);
-    cursor: pointer;
-    width: 100px;
-  }
-  select {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: var(--r-sm);
-    padding: 5px 8px;
-    font-family: var(--font-ui);
-    font-size: 0.8rem;
-    cursor: pointer;
-  }
-  select:focus { outline: none; border-color: var(--accent); }
-
-  /* AUDIO PLAYER */
-  .audio-bar {
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    padding: 10px 24px;
-    display: none;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-    flex-shrink: 0;
-  }
-  .audio-bar.visible { display: flex; }
-
-  .audio-controls { display: flex; align-items: center; gap: 8px; }
-
-  .btn-play {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    background: var(--accent);
-    border: none;
-    color: #0d0d12;
-    font-size: 1rem;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: transform 0.15s, background var(--transition);
-    flex-shrink: 0;
-  }
-  .btn-play:hover { background: var(--accent2); transform: scale(1.06); }
-  .btn-play:active { transform: scale(0.96); }
-
-  .audio-info {
-    flex: 1;
-    min-width: 160px;
-  }
-  .audio-label {
-    font-family: var(--font-ui);
-    font-size: 0.72rem;
-    color: var(--muted);
-    margin-bottom: 3px;
-  }
-  .audio-progress-wrap {
-    background: var(--border);
-    border-radius: 4px;
-    height: 4px;
-    cursor: pointer;
-    position: relative;
-  }
-  .audio-progress-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 4px;
-    transition: width 0.3s linear;
-    pointer-events: none;
-  }
-
-  .audio-speed { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  .speed-btn {
-    background: var(--border);
-    border: none;
-    color: var(--muted);
-    border-radius: 4px;
-    padding: 3px 7px;
-    font-family: var(--font-ui);
-    font-size: 0.72rem;
-    cursor: pointer;
-    transition: background var(--transition), color var(--transition);
-  }
-  .speed-btn.active { background: var(--highlight); color: var(--accent); }
-  .speed-btn:hover { color: var(--text); }
-
-  /* CONTENT */
-  .content-wrap {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0;
-  }
-  .content-wrap::-webkit-scrollbar { width: 6px; }
-  .content-wrap::-webkit-scrollbar-track { background: transparent; }
-  .content-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-  .chapter-content {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 48px 32px 80px;
-  }
-
-  .chapter-title {
-    font-family: var(--font-display);
-    font-size: clamp(1.5rem, 3vw, 2.2rem);
-    color: var(--accent);
-    font-weight: 400;
-    margin-bottom: 32px;
-    line-height: 1.25;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 24px;
-  }
-
-  .para {
-    font-size: var(--reading-size, 1.05rem);
-    line-height: var(--reading-line, 1.9);
-    color: var(--text);
-    margin-bottom: 1.4em;
-    transition: background 0.2s;
-    border-radius: 4px;
-    padding: 2px 6px;
-    margin-left: -6px;
-  }
-  .para.speaking {
-    background: rgba(201,169,110,0.12);
-    color: var(--accent2);
-  }
-  .para:hover { background: rgba(255,255,255,0.03); cursor: pointer; }
-  .para:hover::after {
-    content: ' 🔊';
-    font-size: 0.7em;
-    opacity: 0.5;
-  }
-
-  /* PROGRESS */
-  .reading-progress {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 3px;
-    background: var(--accent);
-    z-index: 100;
-    transition: width 0.1s;
-    pointer-events: none;
-  }
-
-  /* NAV BOTTOM */
-  .chapter-nav {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 48px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
-    gap: 12px;
-  }
-  .nav-btn {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 10px 18px;
-    border-radius: var(--r);
-    cursor: pointer;
-    font-family: var(--font-ui);
-    font-size: 0.82rem;
-    transition: all var(--transition);
-    max-width: 45%;
-    text-align: center;
-    line-height: 1.3;
-  }
-  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-  .nav-btn span { display: block; color: var(--muted); font-size: 0.72rem; margin-bottom: 3px; }
-
-  /* WELCOME */
-  .welcome {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 60vh;
-    text-align: center;
-    padding: 40px 32px;
-  }
-  .welcome-icon { font-size: 4rem; margin-bottom: 20px; }
-  .welcome h1 {
-    font-family: var(--font-display);
-    font-size: clamp(1.8rem, 4vw, 2.8rem);
-    color: var(--accent);
-    font-style: italic;
-    margin-bottom: 12px;
-  }
-  .welcome p { color: var(--muted); font-size: 1rem; max-width: 400px; line-height: 1.7; }
-  .welcome-cta {
-    margin-top: 28px;
-    background: var(--accent);
-    color: #0d0d12;
-    border: none;
-    padding: 12px 28px;
-    border-radius: var(--r);
-    font-family: var(--font-ui);
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background var(--transition);
-  }
-  .welcome-cta:hover { background: var(--accent2); }
-
-  /* FONT SIZE */
-  body.font-sm  { --reading-size: 0.9rem;  --reading-line: 1.75; }
-  body.font-md  { --reading-size: 1.05rem; --reading-line: 1.9; }
-  body.font-lg  { --reading-size: 1.2rem;  --reading-line: 2.0; }
-  body.font-xl  { --reading-size: 1.4rem;  --reading-line: 2.05; }
-
-  /* SEPIA MODE */
-  body.sepia {
-    --bg:      #1c1710;
-    --surface: #211e15;
-    --card:    #2a261a;
-    --text:    #e4d9c0;
-  }
-
-  /* NIGHT MODE (default, already dark) */
-
-  /* MOBILE */
-  @media (max-width: 640px) {
-    .sidebar { position: fixed; left: 0; top: 0; height: 100vh; z-index: 200; transform: translateX(0); transition: transform var(--transition); }
-    .sidebar.collapsed { transform: translateX(-100%); width: 280px; min-width: 280px; }
-    .chapter-content { padding: 32px 20px 60px; }
-    .topbar { padding: 10px 16px; }
-  }
-
-  /* TOOLTIP */
-  [data-tip] { position: relative; }
-  [data-tip]:hover::before {
-    content: attr(data-tip);
-    position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
-    background: var(--card); border: 1px solid var(--border);
-    color: var(--text); font-family: var(--font-ui); font-size: 0.72rem;
-    padding: 4px 8px; border-radius: 4px; white-space: nowrap; z-index: 99;
-    pointer-events: none;
-  }
-
-  /* SEARCH BOX */
-  .search-wrap { padding: 10px 14px; border-bottom: 1px solid var(--border); }
-  .search-input {
-    width: 100%;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--r-sm);
-    padding: 7px 10px;
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: 0.8rem;
-  }
-  .search-input:focus { outline: none; border-color: var(--accent); }
-  .search-input::placeholder { color: var(--muted); }
+/* MOBILE */
+@media(max-width:640px){
+  .sidebar{position:fixed;left:0;top:0;height:100vh;z-index:200;transform:translateX(0);transition:transform var(--t)}
+  .sidebar.collapsed{transform:translateX(-100%);width:285px;min-width:285px}
+  .chapter-content{padding:28px 18px 60px}
+  .topbar{padding:9px 14px}
+  .zoom-val{display:none}
+}
 </style>
 </head>
-<body class="font-md">
+<body>
 
 <div class="reading-progress" id="readingProgress"></div>
+<div class="toast" id="toast"></div>
 
 <div class="app">
 
@@ -449,80 +156,100 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="book-title">Chasing Love</div>
-      <div class="book-meta">Peony · Tradução PT</div>
+      <div class="book-meta">Peony · 37 capítulos</div>
     </div>
     <div class="search-wrap">
-      <input class="search-input" type="search" placeholder="Buscar capítulo..." id="searchInput">
+      <input class="search-input" type="search" placeholder="🔍 Buscar capítulo..." id="searchInput">
     </div>
     <div class="chapter-list" id="chapterList"></div>
   </aside>
 
   <!-- MAIN -->
-  <main class="main">
+  <main class="main" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0">
 
     <!-- TOPBAR -->
     <div class="topbar">
-      <button class="btn-icon" id="btnToggleSidebar" data-tip="Capítulos">☰</button>
+      <button class="btn-icon" id="btnToggleSidebar" title="Capítulos">☰</button>
       <div class="topbar-title" id="topbarTitle">Chasing Love</div>
       <div class="topbar-right">
-        <button class="btn-icon" id="btnAudio" data-tip="Áudio">🎧 Áudio</button>
-        <button class="btn-icon" id="btnSettings" data-tip="Configurações">⚙️</button>
+        <!-- ZOOM -->
+        <div class="zoom-ctrl">
+          <button class="zoom-btn" id="zoomOut" title="Diminuir fonte">A−</button>
+          <span class="zoom-val" id="zoomVal">100%</span>
+          <button class="zoom-btn" id="zoomIn" title="Aumentar fonte">A+</button>
+        </div>
+        <button class="btn-icon" id="btnInlineSearch" title="Buscar no capítulo">🔍</button>
+        <button class="btn-icon" id="btnAudio" title="Áudio">🎧</button>
+        <button class="btn-icon" id="btnSettings" title="Configurações">⚙️</button>
       </div>
     </div>
 
-    <!-- SETTINGS PANEL -->
+    <!-- SETTINGS -->
     <div class="settings-panel" id="settingsPanel">
       <div class="setting-group">
-        <label>Tamanho da fonte</label>
-        <button class="speed-btn" onclick="setFont('sm')">A-</button>
-        <button class="speed-btn active" id="fontMd" onclick="setFont('md')">A</button>
-        <button class="speed-btn" id="fontLg" onclick="setFont('lg')">A+</button>
-        <button class="speed-btn" id="fontXl" onclick="setFont('xl')">A++</button>
-      </div>
-      <div class="setting-group">
         <label>Tema</label>
-        <select onchange="setTheme(this.value)">
-          <option value="dark">Noturno</option>
-          <option value="sepia">Sépia</option>
+        <select id="themeSelect" onchange="setTheme(this.value)">
+          <option value="dark">🌙 Noturno</option>
+          <option value="sepia">📜 Sépia</option>
+          <option value="light">☀️ Claro</option>
         </select>
       </div>
       <div class="setting-group">
-        <label>Voz (TTS)</label>
+        <label>Espaçamento</label>
+        <button class="speed-btn" onclick="setLineH(1.6)">Compacto</button>
+        <button class="speed-btn active" id="lh19" onclick="setLineH(1.9)">Normal</button>
+        <button class="speed-btn" onclick="setLineH(2.3)">Espaçado</button>
+      </div>
+      <div class="setting-group">
+        <label>Voz</label>
         <select id="voiceSelect"></select>
       </div>
+    </div>
+
+    <!-- INLINE SEARCH -->
+    <div class="inline-search" id="inlineSearch" style="margin:0 22px 0;border-radius:0;border-left:none;border-right:none;border-top:none">
+      <span style="color:var(--muted);font-size:.8rem">🔍</span>
+      <input type="text" id="inlineSearchInput" placeholder="Buscar no capítulo...">
+      <span class="inline-search-info" id="searchInfo"></span>
+      <button onclick="searchNav(-1)">↑</button>
+      <button onclick="searchNav(1)">↓</button>
+      <button onclick="closeInlineSearch()">✕</button>
     </div>
 
     <!-- AUDIO BAR -->
     <div class="audio-bar" id="audioBar">
       <div class="audio-controls">
-        <button class="btn-icon" id="btnPrev" data-tip="Parágrafo anterior">⏮</button>
+        <button class="btn-icon" id="btnPrev" title="Parágrafo anterior">⏮</button>
         <button class="btn-play" id="btnPlay">▶</button>
-        <button class="btn-icon" id="btnNext" data-tip="Próximo parágrafo">⏭</button>
-        <button class="btn-icon" id="btnStop" data-tip="Parar">⏹</button>
+        <button class="btn-icon" id="btnNext" title="Próximo parágrafo">⏭</button>
+        <button class="btn-icon" id="btnStop" title="Parar">⏹</button>
       </div>
       <div class="audio-info">
-        <div class="audio-label" id="audioLabel">Pressione play para ouvir o capítulo</div>
-        <div class="audio-progress-wrap" id="audioProgressWrap">
+        <div class="audio-label" id="audioLabel">Pressione play para ouvir</div>
+        <div class="audio-progress-wrap">
           <div class="audio-progress-fill" id="audioProgressFill" style="width:0%"></div>
         </div>
       </div>
       <div class="audio-speed">
-        <span style="font-family:var(--font-ui);font-size:0.72rem;color:var(--muted)">Velocidade:</span>
+        <span style="font-family:var(--font-ui);font-size:.7rem;color:var(--muted)">Vel:</span>
         <button class="speed-btn" onclick="setRate(0.8)">0.8×</button>
-        <button class="speed-btn active" id="rate1" onclick="setRate(1)">1×</button>
+        <button class="speed-btn active" onclick="setRate(1)">1×</button>
         <button class="speed-btn" onclick="setRate(1.3)">1.3×</button>
         <button class="speed-btn" onclick="setRate(1.6)">1.6×</button>
+        <button class="speed-btn" onclick="setRate(2)">2×</button>
       </div>
     </div>
 
     <!-- CONTENT -->
     <div class="content-wrap" id="contentWrap">
       <div class="chapter-content" id="chapterContent">
-        <div class="welcome">
+        <div class="welcome" id="welcomeScreen">
           <div class="welcome-icon">📖</div>
           <h1>Chasing Love</h1>
-          <p>Romance tailandês traduzido. Escolha um capítulo na barra lateral para começar a ler — ou ouça com o leitor de áudio integrado.</p>
-          <button class="welcome-cta" onclick="loadChapter(0)">Começar do início</button>
+          <p>Romance tailandês • 37 capítulos disponíveis</p>
+          <p style="font-size:.82rem;margin-top:4px">Clique em qualquer parágrafo para ouvir a partir dali. Use A− e A+ para ajustar o tamanho da letra.</p>
+          <button class="welcome-cta" onclick="loadChapter(0)">Começar do início ›</button>
+          <div class="bookmarks-list" id="bookmarksList"></div>
         </div>
       </div>
     </div>
@@ -530,38 +257,41 @@
   </main>
 </div>
 
-<!-- BOOK DATA -->
 <script src="book_data.js"></script>
-
 <script>
-// ─── STATE ───
+// ── STATE ──
 let currentChapter = -1;
-let ttsActive = false;
-let utterance = null;
 let paraIndex = 0;
 let speechRate = 1;
 let selectedVoice = null;
-let fontClass = 'font-md';
-let sidebarOpen = true;
+let zoomLevel = 100; // percent, base = 100 = 1.05rem
+let lineHeight = 1.9;
+let searchMatches = [];
+let searchMatchIdx = 0;
 
 const synth = window.speechSynthesis;
 let voices = [];
 
-// ─── INIT ───
+// bookmarks: { chapterIdx: paraIdx }
+let bookmarks = JSON.parse(localStorage.getItem('cl_bookmarks') || '{}');
+// last read position
+let lastRead = JSON.parse(localStorage.getItem('cl_lastread') || 'null');
+
+// ── INIT ──
 function init() {
   buildChapterList();
   loadVoices();
-  bindEvents();
-  restoreProgress();
+  restoreSettings();
+  renderWelcomeBookmarks();
 }
 
 function buildChapterList() {
   const list = document.getElementById('chapterList');
   BOOK_DATA.forEach((ch, i) => {
     const div = document.createElement('div');
-    div.className = 'ch-item';
-    div.textContent = ch.title;
+    div.className = 'ch-item' + (bookmarks[i] !== undefined ? ' bookmarked' : '');
     div.dataset.index = i;
+    div.innerHTML = `<span class="bk-icon">🔖</span><span class="ch-label">${escHtml(ch.title)}</span>`;
     div.onclick = () => loadChapter(i);
     list.appendChild(div);
   });
@@ -569,20 +299,18 @@ function buildChapterList() {
 
 function loadVoices() {
   const populate = () => {
-    voices = synth.getVoices().filter(v =>
-      v.lang.startsWith('pt') || v.lang.startsWith('es')
-    );
-    // Also include all if no PT found
-    if (voices.length === 0) voices = synth.getVoices();
+    voices = synth.getVoices();
     const sel = document.getElementById('voiceSelect');
     sel.innerHTML = '';
-    voices.forEach((v, i) => {
+    // Prioritize PT
+    const pt = voices.filter(v => v.lang.startsWith('pt'));
+    const rest = voices.filter(v => !v.lang.startsWith('pt'));
+    [...pt, ...rest].forEach((v, i) => {
       const opt = document.createElement('option');
-      opt.value = i;
+      opt.value = voices.indexOf(v);
       opt.textContent = `${v.name} (${v.lang})`;
       sel.appendChild(opt);
     });
-    // Default: pick pt-BR or pt voice
     const ptIdx = voices.findIndex(v => v.lang === 'pt-BR' || v.lang === 'pt');
     if (ptIdx > -1) sel.value = ptIdx;
     selectedVoice = voices[sel.value] || voices[0];
@@ -592,76 +320,257 @@ function loadVoices() {
   populate();
 }
 
-// ─── CHAPTER LOADING ───
-function loadChapter(idx) {
+// ── CHAPTER LOAD ──
+function loadChapter(idx, jumpPara) {
   stopAudio();
   currentChapter = idx;
-  paraIndex = 0;
+  paraIndex = jumpPara !== undefined ? jumpPara : 0;
 
-  // Sidebar active
   document.querySelectorAll('.ch-item').forEach(el => el.classList.remove('active'));
   const activeEl = document.querySelector(`.ch-item[data-index="${idx}"]`);
-  if (activeEl) {
-    activeEl.classList.add('active');
-    activeEl.scrollIntoView({ block: 'nearest' });
-  }
+  if (activeEl) { activeEl.classList.add('active'); activeEl.scrollIntoView({block:'nearest'}); }
 
   const ch = BOOK_DATA[idx];
-  const wrap = document.getElementById('chapterContent');
   document.getElementById('topbarTitle').textContent = ch.title;
 
-  let html = `<h1 class="chapter-title">${escHtml(ch.title)}</h1>`;
+  const bkActive = bookmarks[idx] !== undefined;
+  const bkPara = bookmarks[idx];
+
+  let html = `<div class="chapter-header">
+    <h1 class="chapter-title">${escHtml(ch.title)}</h1>
+    <div class="chapter-meta">
+      <span>${idx + 1} de ${BOOK_DATA.length}</span>
+      <span>•</span>
+      <span>${ch.paragraphs.length} parágrafos</span>
+      <button class="bk-toggle ${bkActive ? 'active' : ''}" id="bkToggleBtn" onclick="toggleBookmark()">
+        ${bkActive ? '🔖 Marcado' : '🔖 Marcar'}
+      </button>
+      ${bkActive ? `<button class="bk-toggle" onclick="loadChapter(${idx}, ${bkPara})" style="color:var(--accent2)">↩ Ir ao marcador</button>` : ''}
+    </div>
+  </div>`;
+
   ch.paragraphs.forEach((p, i) => {
     html += `<p class="para" data-para="${i}" onclick="speakFrom(${i})">${escHtml(p)}</p>`;
   });
 
   html += `<div class="chapter-nav">
-    <button class="nav-btn" ${idx === 0 ? 'disabled' : ''} onclick="loadChapter(${idx-1})">
-      <span>← Anterior</span>${idx > 0 ? escHtml(BOOK_DATA[idx-1].title).substring(0,40) : ''}
+    <button class="nav-btn" ${idx===0?'disabled':''} onclick="loadChapter(${idx-1})">
+      <span>← Anterior</span>${idx>0 ? escHtml(BOOK_DATA[idx-1].title).substring(0,45) : ''}
     </button>
-    <button class="nav-btn" ${idx === BOOK_DATA.length-1 ? 'disabled' : ''} onclick="loadChapter(${idx+1})">
-      <span>Próximo →</span>${idx < BOOK_DATA.length-1 ? escHtml(BOOK_DATA[idx+1].title).substring(0,40) : ''}
+    <button class="nav-btn" ${idx===BOOK_DATA.length-1?'disabled':''} onclick="loadChapter(${idx+1})">
+      <span>Próximo →</span>${idx<BOOK_DATA.length-1 ? escHtml(BOOK_DATA[idx+1].title).substring(0,45) : ''}
     </button>
   </div>`;
 
-  wrap.innerHTML = html;
-  document.getElementById('contentWrap').scrollTop = 0;
+  document.getElementById('chapterContent').innerHTML = html;
+  const cw = document.getElementById('contentWrap');
+  cw.scrollTop = 0;
+
+  // Jump to para if resuming bookmark
+  if (jumpPara !== undefined && jumpPara > 0) {
+    setTimeout(() => {
+      const el = document.querySelector(`.para[data-para="${jumpPara}"]`);
+      if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 100);
+  }
+
   updateAudioLabel();
-  saveProgress(idx);
-
-  // On mobile close sidebar
+  saveLastRead(idx, paraIndex);
   if (window.innerWidth <= 640) toggleSidebar(false);
+  closeInlineSearch();
 }
 
-// ─── AUDIO ───
-function showAudioBar(show) {
-  document.getElementById('audioBar').classList.toggle('visible', show);
+// ── BOOKMARK ──
+function toggleBookmark() {
+  if (currentChapter < 0) return;
+  if (bookmarks[currentChapter] !== undefined) {
+    delete bookmarks[currentChapter];
+    showToast('Marcador removido');
+  } else {
+    bookmarks[currentChapter] = paraIndex;
+    showToast('📖 Capítulo marcado!');
+  }
+  localStorage.setItem('cl_bookmarks', JSON.stringify(bookmarks));
+  // Update sidebar
+  const el = document.querySelector(`.ch-item[data-index="${currentChapter}"]`);
+  if (el) el.classList.toggle('bookmarked', bookmarks[currentChapter] !== undefined);
+  // Refresh chapter header
+  const btn = document.getElementById('bkToggleBtn');
+  if (btn) {
+    btn.className = 'bk-toggle' + (bookmarks[currentChapter] !== undefined ? ' active' : '');
+    btn.textContent = bookmarks[currentChapter] !== undefined ? '🔖 Marcado' : '🔖 Marcar';
+  }
+  renderWelcomeBookmarks();
 }
 
+function renderWelcomeBookmarks() {
+  const bl = document.getElementById('bookmarksList');
+  if (!bl) return;
+  const keys = Object.keys(bookmarks);
+  if (keys.length === 0) { bl.innerHTML = ''; return; }
+  bl.innerHTML = '<p style="font-family:var(--font-ui);font-size:.78rem;color:var(--muted);margin-top:16px;margin-bottom:6px">Continuar leitura:</p>';
+  keys.forEach(k => {
+    const btn = document.createElement('button');
+    btn.className = 'bk-resume';
+    btn.innerHTML = `🔖 <span>${escHtml(BOOK_DATA[k].title).substring(0,50)}</span>`;
+    btn.onclick = () => loadChapter(+k, bookmarks[k]);
+    bl.appendChild(btn);
+  });
+}
+
+// ── LAST READ ──
+function saveLastRead(idx, para) {
+  lastRead = {idx, para};
+  localStorage.setItem('cl_lastread', JSON.stringify(lastRead));
+}
+
+// ── INLINE SEARCH ──
+document.getElementById('btnInlineSearch').addEventListener('click', () => {
+  const s = document.getElementById('inlineSearch');
+  const open = s.classList.toggle('open');
+  document.getElementById('btnInlineSearch').classList.toggle('active', open);
+  if (open) { document.getElementById('inlineSearchInput').focus(); }
+  else { closeInlineSearch(); }
+});
+
+document.getElementById('inlineSearchInput').addEventListener('input', function() {
+  runInlineSearch(this.value.trim());
+});
+document.getElementById('inlineSearchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchNav(1);
+  if (e.key === 'Escape') closeInlineSearch();
+});
+
+function runInlineSearch(q) {
+  // Clear previous highlights
+  document.querySelectorAll('.para').forEach(el => {
+    el.innerHTML = escHtml(BOOK_DATA[currentChapter]?.paragraphs[+el.dataset.para] || '');
+  });
+  searchMatches = [];
+  searchMatchIdx = 0;
+  if (!q || currentChapter < 0) { document.getElementById('searchInfo').textContent = ''; return; }
+
+  const ch = BOOK_DATA[currentChapter];
+  const regex = new RegExp(escRegex(q), 'gi');
+  ch.paragraphs.forEach((p, i) => {
+    const el = document.querySelector(`.para[data-para="${i}"]`);
+    if (!el) return;
+    if (regex.test(p)) {
+      searchMatches.push(i);
+      el.innerHTML = p.replace(new RegExp(escRegex(q), 'gi'), m => `<mark>${m}</mark>`);
+    }
+    regex.lastIndex = 0;
+  });
+
+  document.getElementById('searchInfo').textContent = searchMatches.length > 0
+    ? `${searchMatchIdx+1}/${searchMatches.length}` : 'Sem resultados';
+  if (searchMatches.length > 0) scrollToMatch(0);
+}
+
+function searchNav(dir) {
+  if (searchMatches.length === 0) return;
+  searchMatchIdx = (searchMatchIdx + dir + searchMatches.length) % searchMatches.length;
+  document.getElementById('searchInfo').textContent = `${searchMatchIdx+1}/${searchMatches.length}`;
+  scrollToMatch(searchMatchIdx);
+}
+
+function scrollToMatch(idx) {
+  const paraIdx = searchMatches[idx];
+  const el = document.querySelector(`.para[data-para="${paraIdx}"]`);
+  if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function closeInlineSearch() {
+  const s = document.getElementById('inlineSearch');
+  s.classList.remove('open');
+  document.getElementById('btnInlineSearch').classList.remove('active');
+  document.getElementById('inlineSearchInput').value = '';
+  document.getElementById('searchInfo').textContent = '';
+  // Remove highlights
+  if (currentChapter >= 0) {
+    document.querySelectorAll('.para').forEach(el => {
+      el.innerHTML = escHtml(BOOK_DATA[currentChapter]?.paragraphs[+el.dataset.para] || '');
+    });
+  }
+  searchMatches = [];
+}
+
+// ── ZOOM ──
+const ZOOM_LEVELS = [70, 80, 90, 100, 110, 125, 140, 160, 185, 210];
+let zoomIdx = 3; // 100%
+
+function applyZoom() {
+  const pct = ZOOM_LEVELS[zoomIdx];
+  const base = 1.05; // rem at 100%
+  const size = (base * pct / 100).toFixed(3);
+  document.documentElement.style.setProperty('--reading-size', size + 'rem');
+  document.getElementById('zoomVal').textContent = pct + '%';
+  localStorage.setItem('cl_zoom', zoomIdx);
+}
+
+document.getElementById('zoomIn').addEventListener('click', () => {
+  if (zoomIdx < ZOOM_LEVELS.length - 1) { zoomIdx++; applyZoom(); }
+});
+document.getElementById('zoomOut').addEventListener('click', () => {
+  if (zoomIdx > 0) { zoomIdx--; applyZoom(); }
+});
+
+// ── LINE HEIGHT ──
+function setLineH(v) {
+  lineHeight = v;
+  document.documentElement.style.setProperty('--reading-line', v);
+  localStorage.setItem('cl_lineh', v);
+  document.querySelectorAll('.speed-btn').forEach(b => {
+    if (b.onclick && b.onclick.toString().includes(v)) b.classList.add('active');
+    else if (b.onclick && (b.onclick.toString().includes('1.6') || b.onclick.toString().includes('1.9') || b.onclick.toString().includes('2.3'))) b.classList.remove('active');
+  });
+}
+
+// ── THEME ──
+function setTheme(t) {
+  document.body.classList.remove('sepia','light');
+  if (t !== 'dark') document.body.classList.add(t);
+  localStorage.setItem('cl_theme', t);
+}
+
+// ── SETTINGS ──
+document.getElementById('btnSettings').addEventListener('click', () => {
+  const p = document.getElementById('settingsPanel');
+  p.classList.toggle('open');
+  document.getElementById('btnSettings').classList.toggle('active', p.classList.contains('open'));
+});
+
+// ── SIDEBAR ──
+let sidebarOpen = true;
+function toggleSidebar(force) {
+  sidebarOpen = force !== undefined ? force : !sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('collapsed', !sidebarOpen);
+}
+document.getElementById('btnToggleSidebar').addEventListener('click', () => toggleSidebar());
+
+// ── SIDEBAR SEARCH ──
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  document.querySelectorAll('.ch-item').forEach(el => {
+    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+
+// ── AUDIO ──
 document.getElementById('btnAudio').addEventListener('click', () => {
   const bar = document.getElementById('audioBar');
-  const visible = bar.classList.toggle('visible');
-  document.getElementById('btnAudio').classList.toggle('active', visible);
-  ttsActive = visible;
-  if (!visible) stopAudio();
+  const v = bar.classList.toggle('visible');
+  document.getElementById('btnAudio').classList.toggle('active', v);
+  if (!v) stopAudio();
 });
 
 document.getElementById('btnPlay').addEventListener('click', () => {
-  if (synth.speaking && !synth.paused) {
-    synth.pause();
-    document.getElementById('btnPlay').textContent = '▶';
-  } else if (synth.paused) {
-    synth.resume();
-    document.getElementById('btnPlay').textContent = '⏸';
-  } else {
-    speakFrom(paraIndex);
-  }
+  if (synth.speaking && !synth.paused) { synth.pause(); document.getElementById('btnPlay').textContent = '▶'; }
+  else if (synth.paused) { synth.resume(); document.getElementById('btnPlay').textContent = '⏸'; }
+  else speakFrom(paraIndex);
 });
-
-document.getElementById('btnStop').addEventListener('click', stopAudio);
-document.getElementById('btnPrev').addEventListener('click', () => {
-  if (paraIndex > 0) speakFrom(paraIndex - 1);
-});
+document.getElementById('btnStop').addEventListener('click', () => stopAudio());
+document.getElementById('btnPrev').addEventListener('click', () => { if (paraIndex > 0) speakFrom(paraIndex - 1); });
 document.getElementById('btnNext').addEventListener('click', () => {
   const ch = BOOK_DATA[currentChapter];
   if (ch && paraIndex < ch.paragraphs.length - 1) speakFrom(paraIndex + 1);
@@ -676,149 +585,96 @@ function speakFrom(idx) {
 
 function speakPara() {
   const ch = BOOK_DATA[currentChapter];
-  if (!ch || paraIndex >= ch.paragraphs.length) {
-    stopAudio();
-    return;
-  }
-
+  if (!ch || paraIndex >= ch.paragraphs.length) { stopAudio(); return; }
   const text = ch.paragraphs[paraIndex];
-  utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = speechRate;
-  utterance.lang = 'pt-BR';
-  if (selectedVoice) utterance.voice = selectedVoice;
-
-  utterance.onstart = () => {
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.rate = speechRate;
+  utt.lang = 'pt-BR';
+  if (selectedVoice) utt.voice = selectedVoice;
+  utt.onstart = () => {
     highlightPara(paraIndex);
     document.getElementById('btnPlay').textContent = '⏸';
     updateAudioLabel();
-    updateProgress();
+    updateAudioProgress();
+    saveLastRead(currentChapter, paraIndex);
   };
-  utterance.onend = () => {
-    clearHighlight();
-    paraIndex++;
-    speakPara();
-  };
-  utterance.onerror = () => { clearHighlight(); };
-
-  synth.speak(utterance);
+  utt.onend = () => { clearHighlight(); paraIndex++; speakPara(); };
+  utt.onerror = () => clearHighlight();
+  synth.speak(utt);
 }
 
 function stopAudio(resetPlay = true) {
   synth.cancel();
   clearHighlight();
-  if (resetPlay) {
-    document.getElementById('btnPlay').textContent = '▶';
-    document.getElementById('audioProgressFill').style.width = '0%';
-    updateAudioLabel();
-  }
+  if (resetPlay) { document.getElementById('btnPlay').textContent = '▶'; document.getElementById('audioProgressFill').style.width = '0%'; updateAudioLabel(); }
 }
 
 function highlightPara(idx) {
   clearHighlight();
   const el = document.querySelector(`.para[data-para="${idx}"]`);
-  if (el) {
-    el.classList.add('speaking');
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+  if (el) { el.classList.add('speaking'); el.scrollIntoView({behavior:'smooth', block:'center'}); }
 }
+function clearHighlight() { document.querySelectorAll('.para.speaking').forEach(el => el.classList.remove('speaking')); }
 
-function clearHighlight() {
-  document.querySelectorAll('.para.speaking').forEach(el => el.classList.remove('speaking'));
-}
-
-function updateProgress() {
+function updateAudioProgress() {
   const ch = BOOK_DATA[currentChapter];
   if (!ch) return;
-  const pct = ch.paragraphs.length > 0 ? (paraIndex / ch.paragraphs.length) * 100 : 0;
+  const pct = (paraIndex / ch.paragraphs.length) * 100;
   document.getElementById('audioProgressFill').style.width = pct + '%';
 }
 
 function updateAudioLabel() {
   const ch = BOOK_DATA[currentChapter];
   if (!ch) return;
-  document.getElementById('audioLabel').textContent =
-    `Parágrafo ${paraIndex + 1} de ${ch.paragraphs.length}`;
+  document.getElementById('audioLabel').textContent = `Parágrafo ${paraIndex + 1} de ${ch.paragraphs.length}`;
 }
 
 function setRate(r) {
   speechRate = r;
-  document.querySelectorAll('.speed-btn').forEach(b => {
-    if (b.onclick && b.onclick.toString().includes(r)) b.classList.add('active');
-    else b.classList.remove('active');
-  });
-  if (synth.speaking) {
-    const idx = paraIndex;
-    stopAudio(false);
-    paraIndex = idx;
-    speakPara();
-  }
+  if (synth.speaking) { const i = paraIndex; stopAudio(false); paraIndex = i; speakPara(); }
 }
 
-// ─── FONT / THEME ───
-function setFont(size) {
-  document.body.classList.remove('font-sm','font-md','font-lg','font-xl');
-  document.body.classList.add('font-' + size);
-  localStorage.setItem('cl_font', size);
-}
-
-function setTheme(t) {
-  document.body.classList.remove('sepia');
-  if (t === 'sepia') document.body.classList.add('sepia');
-  localStorage.setItem('cl_theme', t);
-}
-
-// ─── SIDEBAR ───
-function toggleSidebar(force) {
-  const sb = document.getElementById('sidebar');
-  sidebarOpen = force !== undefined ? force : !sidebarOpen;
-  sb.classList.toggle('collapsed', !sidebarOpen);
-}
-
-document.getElementById('btnToggleSidebar').addEventListener('click', () => toggleSidebar());
-
-// ─── SETTINGS ───
-document.getElementById('btnSettings').addEventListener('click', () => {
-  const p = document.getElementById('settingsPanel');
-  p.classList.toggle('open');
-  document.getElementById('btnSettings').classList.toggle('active', p.classList.contains('open'));
-});
-
-// ─── SEARCH ───
-document.getElementById('searchInput').addEventListener('input', function() {
-  const q = this.value.toLowerCase().trim();
-  document.querySelectorAll('.ch-item').forEach(el => {
-    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-});
-
-// ─── READING SCROLL PROGRESS ───
+// ── SCROLL PROGRESS ──
 document.getElementById('contentWrap').addEventListener('scroll', function() {
-  const el = this;
-  const pct = el.scrollTop / (el.scrollHeight - el.clientHeight) * 100;
+  const pct = this.scrollTop / (this.scrollHeight - this.clientHeight) * 100;
   document.getElementById('readingProgress').style.width = pct + '%';
 });
 
-// ─── PERSIST ───
-function saveProgress(idx) {
-  localStorage.setItem('cl_chapter', idx);
+// ── TOAST ──
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
 }
-function restoreProgress() {
-  const saved = localStorage.getItem('cl_chapter');
-  const font = localStorage.getItem('cl_font');
+
+// ── KEYBOARD SHORTCUTS ──
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'ArrowRight' && currentChapter < BOOK_DATA.length - 1) loadChapter(currentChapter + 1);
+  if (e.key === 'ArrowLeft' && currentChapter > 0) loadChapter(currentChapter - 1);
+  if (e.key === ' ') { e.preventDefault(); document.getElementById('btnPlay').click(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); document.getElementById('btnInlineSearch').click(); }
+  if (e.key === '+' || e.key === '=') { zoomIdx = Math.min(zoomIdx+1, ZOOM_LEVELS.length-1); applyZoom(); }
+  if (e.key === '-') { zoomIdx = Math.max(zoomIdx-1, 0); applyZoom(); }
+});
+
+// ── RESTORE ──
+function restoreSettings() {
+  const z = localStorage.getItem('cl_zoom');
+  if (z !== null) { zoomIdx = +z; applyZoom(); }
   const theme = localStorage.getItem('cl_theme');
-  if (font) setFont(font);
-  if (theme) setTheme(theme);
-  // Don't auto-load — let user choose
+  if (theme) { setTheme(theme); document.getElementById('themeSelect').value = theme; }
+  const lh = localStorage.getItem('cl_lineh');
+  if (lh) setLineH(+lh);
 }
 
-// ─── UTILS ───
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// ── UTILS ──
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
-function bindEvents() {}
-
-// ─── START ───
 init();
 </script>
 </body>
